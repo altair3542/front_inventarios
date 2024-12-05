@@ -1,29 +1,26 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import api from "../api/api";
 
 const Login = () => {
+  const { isAuthenticated, login } = useAuth();
   const [formData, setFormData] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" />;
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.username || !formData.password) {
-      setError("Todos los campos son obligatorios.");
-      return;
-    }
-
     setLoading(true);
     api
       .post("/login/", formData)
       .then((response) => {
-        localStorage.setItem("token", response.data.access);
+        login(response.data.access);
         navigate("/dashboard");
       })
       .catch(() => {
@@ -49,7 +46,9 @@ const Login = () => {
             name="username"
             id="username"
             value={formData.username}
-            onChange={handleChange}
+            onChange={(e) =>
+              setFormData({ ...formData, [e.target.name]: e.target.value })
+            }
             className="mt-1 block w-full px-4 py-2 border rounded-md"
           />
         </div>
@@ -62,7 +61,9 @@ const Login = () => {
             name="password"
             id="password"
             value={formData.password}
-            onChange={handleChange}
+            onChange={(e) =>
+              setFormData({ ...formData, [e.target.name]: e.target.value })
+            }
             className="mt-1 block w-full px-4 py-2 border rounded-md"
           />
         </div>

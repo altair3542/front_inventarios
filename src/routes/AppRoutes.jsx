@@ -1,23 +1,37 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Layout from "../layout/Layout";
-import Categorias from "../pages/Categorias";
+import { AuthProvider } from "../context/AuthContext";
+import ProtectedRoute from "./ProtectedRoute";
 
-const Dashboard = () => <h1>Dashboard</h1>;
-const Productos = () => <h1>Productos</h1>;
-const Ventas = () => <h1>Ventas</h1>;
+import Layout from "../layout/Layout";
+import Login from "../pages/Login";
+import Signup from "../pages/Signup";
+import Categorias from "../pages/Categorias";
+import Dashboard from "../pages/Dashboard";
 
 const AppRoutes = () => {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="categorias" element={<Categorias />} />
-          <Route path="productos" element={<Productos />} />
-          <Route path="ventas" element={<Ventas />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Rutas Públicas */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+
+          {/* Rutas Protegidas */}
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Layout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="categorias" element={<Categorias />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 };
 
