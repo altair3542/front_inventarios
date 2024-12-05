@@ -1,32 +1,50 @@
 import { useState } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import api from "../api/api";
+import { useAuth } from "../context/AuthContext"; // Tu contexto de autenticación
+import api, { setAuthToken } from "../api/api"; // Axios configurado con manejo de tokens
 
 const Login = () => {
-  const { isAuthenticated, login } = useAuth();
+  const { isAuthenticated, login } = useAuth(); // `login` debe configurar el token en el contexto
   const [formData, setFormData] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // Redirigir si el usuario ya está autenticado
   if (isAuthenticated) {
     return <Navigate to="/dashboard" />;
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    api
-      .post("/login/", formData)
-      .then((response) => {
-        login(response.data.access);
-        navigate("/dashboard");
-      })
-      .catch(() => {
-        setError("Credenciales inválidas. Inténtalo de nuevo.");
-      })
-      .finally(() => setLoading(false));
+    setError(""); // Limpiar errores previos
+
+    try {
+      // Solicitar tokens al backend
+      const response = await api.post("/token/", formData);
+      const { access, refresh } = response.data;
+
+      // Guardar tokens en localStorage o sessionStorage
+      localStorage.setItem("accessToken", access);
+      localStorage.setItem("refreshToken", refresh);
+
+      // Configurar token de acceso en Axios
+      setAuthToken(access);
+
+      // Actualizar el estado de autenticación
+      login(access);
+
+      // Redirigir al dashboard
+      navigate("/dashboard");
+    } catch (err) {
+      // Manejar errores (por ejemplo, credenciales inválidas)
+      setError(
+        err.response?.data?.detail || "Error al iniciar sesión. Inténtalo de nuevo."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
